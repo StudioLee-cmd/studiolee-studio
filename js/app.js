@@ -1,0 +1,893 @@
+(function () {
+  'use strict';
+
+  // ============================================
+  // StudioLee Studio — Dashboard Application
+  // ============================================
+
+  let DATA = null;
+  let lightboxItems = [];
+  let lightboxIdx = 0;
+
+  // --- SVG Icons ---
+  const ICON = {
+    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    projects: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+    personas: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+    videos: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+    images: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    download: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+    clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    film: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>',
+    expand: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>'
+  };
+
+  // --- Helpers ---
+  function contentUrl(path) {
+    return DATA.meta.contentRepo + '/' + path;
+  }
+
+  function studioUrl(path) {
+    return DATA.meta.studioRepo + '/' + path;
+  }
+
+  function getPersona(id) {
+    return DATA.personas.find(p => p.id === id);
+  }
+
+  function statusBadge(status) {
+    const map = {
+      'approved': { cls: 'badge-approved', label: 'Approved' },
+      'review': { cls: 'badge-review', label: 'In Review' },
+      'in-review': { cls: 'badge-review', label: 'In Review' },
+      'draft': { cls: 'badge-draft', label: 'Draft' },
+      'not-started': { cls: 'badge-draft', label: 'Not Started' },
+      'phase-1-assets': { cls: 'badge-production', label: 'Phase 1 — Assets' },
+      'in-production': { cls: 'badge-production', label: 'In Production' }
+    };
+    const s = map[status] || { cls: 'badge-draft', label: status };
+    return `<span class="badge ${s.cls}">${s.label}</span>`;
+  }
+
+  async function downloadFile(url, filename) {
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || url.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      window.open(url, '_blank');
+    }
+  }
+
+  function downloadBtn(url, filename) {
+    return `<button class="download-btn" onclick="event.stopPropagation(); window._download('${url}', '${filename || ''}')" title="Download">${ICON.download}</button>`;
+  }
+
+  // Global download function
+  window._download = downloadFile;
+
+  // --- Navigation ---
+  function renderNav(active) {
+    const links = [
+      { href: '#/', label: 'Home', icon: ICON.home, key: '' },
+      { href: '#/projects', label: 'Projects', icon: ICON.projects, key: 'projects' },
+      { href: '#/personas', label: 'Personas', icon: ICON.personas, key: 'personas' },
+      { href: '#/videos', label: 'Videos', icon: ICON.videos, key: 'videos' },
+      { href: '#/images', label: 'Images', icon: ICON.images, key: 'images' }
+    ];
+
+    document.getElementById('main-nav').innerHTML = `
+      <div class="nav-logo" onclick="location.hash='#/'">
+        <span>SL</span> Studio
+      </div>
+      <ul class="nav-links">
+        ${links.map(l => `
+          <li><a href="${l.href}" class="${active === l.key ? 'active' : ''}">
+            ${l.icon}<span>${l.label}</span>
+          </a></li>
+        `).join('')}
+      </ul>
+    `;
+  }
+
+  // --- Breadcrumb ---
+  function renderBreadcrumb(items) {
+    if (!items || items.length === 0) {
+      document.getElementById('breadcrumb-bar').innerHTML = '';
+      return;
+    }
+    document.getElementById('breadcrumb-bar').innerHTML = `
+      <ul class="breadcrumb">
+        ${items.map((item, i) => `
+          <li>${i < items.length - 1
+            ? `<a href="${item.href}">${item.label}</a>`
+            : `<span class="current">${item.label}</span>`
+          }</li>
+        `).join('')}
+      </ul>
+    `;
+  }
+
+  // --- Lightbox ---
+  function openLightbox(items, index) {
+    lightboxItems = items;
+    lightboxIdx = index || 0;
+    updateLightbox();
+    document.getElementById('lightbox').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function updateLightbox() {
+    const item = lightboxItems[lightboxIdx];
+    const content = document.querySelector('.lightbox-content');
+    const dl = document.getElementById('lightbox-download');
+
+    if (item.type === 'video') {
+      content.innerHTML = `<video src="${item.url}" controls autoplay playsinline style="max-height:80vh;max-width:90vw;"></video>`;
+    } else {
+      content.innerHTML = `<img src="${item.url}" alt="${item.title || ''}">`;
+    }
+
+    dl.onclick = function (e) {
+      e.preventDefault();
+      downloadFile(item.url, item.filename || item.url.split('/').pop());
+    };
+
+    document.querySelector('.lightbox-prev').style.display = lightboxItems.length > 1 ? '' : 'none';
+    document.querySelector('.lightbox-next').style.display = lightboxItems.length > 1 ? '' : 'none';
+  }
+
+  window.closeLightbox = function () {
+    document.getElementById('lightbox').classList.add('hidden');
+    document.body.style.overflow = '';
+    const content = document.querySelector('.lightbox-content');
+    content.innerHTML = '';
+  };
+
+  window.lightboxNav = function (dir) {
+    lightboxIdx = (lightboxIdx + dir + lightboxItems.length) % lightboxItems.length;
+    updateLightbox();
+  };
+
+  // Keyboard nav
+  document.addEventListener('keydown', function (e) {
+    if (document.getElementById('lightbox').classList.contains('hidden')) return;
+    if (e.key === 'Escape') window.closeLightbox();
+    if (e.key === 'ArrowLeft') window.lightboxNav(-1);
+    if (e.key === 'ArrowRight') window.lightboxNav(1);
+  });
+
+  // --- Card Components ---
+  function mediaCard(opts) {
+    const isVideo = opts.type === 'video';
+    const aspectClass = opts.aspect || '';
+    const url = opts.src;
+    const fname = (opts.filename || url.split('/').pop());
+
+    return `
+      <div class="card" ${opts.href ? `onclick="location.hash='${opts.href}'"` : `onclick="window._openLB(${opts.lbGroup || 0}, ${opts.lbIndex || 0})"`}>
+        <div class="card-media ${aspectClass}">
+          ${isVideo
+            ? `<video src="${url}" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>`
+            : `<img src="${url}" alt="${opts.title || ''}" loading="lazy">`
+          }
+          ${downloadBtn(url, fname)}
+          ${isVideo ? `<span class="video-duration">${opts.duration || ''}</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${opts.title || ''}</div>
+          ${opts.subtitle ? `<div class="card-subtitle">${opts.subtitle}</div>` : ''}
+          ${opts.tags ? `<div class="card-tags">${opts.tags.map(t => `<span class="badge badge-niche">${t}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Register lightbox groups ---
+  let lbGroups = [];
+
+  function registerLB(items) {
+    const idx = lbGroups.length;
+    lbGroups.push(items);
+    return idx;
+  }
+
+  window._openLB = function (group, index) {
+    openLightbox(lbGroups[group], index);
+  };
+
+  // ===========================
+  //        VIEWS
+  // ===========================
+
+  // --- HOME ---
+  function renderHome(app) {
+    renderNav('');
+    renderBreadcrumb([{ label: 'Home', href: '#/' }]);
+    lbGroups = [];
+
+    const totalImages = DATA.personas.length + DATA.personas.reduce((a, p) => a + p.posts.length, 0);
+    const approvedScenes = DATA.projects.reduce((a, p) => a + p.scenes.filter(s => s.status === 'approved').length, 0);
+
+    // Recent items for lightbox
+    const recentItems = DATA.videos.map(v => ({
+      url: contentUrl(v.file),
+      type: 'video',
+      title: v.title,
+      filename: v.file.split('/').pop()
+    }));
+    const recentLB = registerLB(recentItems);
+
+    app.innerHTML = `
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>StudioLee Studio — AI content production pipeline</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">${DATA.projects.length}</div>
+          <div class="stat-label">Projects</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${DATA.personas.length}</div>
+          <div class="stat-label">Personas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${DATA.videos.length}</div>
+          <div class="stat-label">Videos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${totalImages}</div>
+          <div class="stat-label">Images</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>Active Projects</h2>
+          <a href="#/projects" class="view-all">View all &rarr;</a>
+        </div>
+        <div class="grid grid-3">
+          ${DATA.projects.map(p => {
+            const thumb = p.thumbnailRepo === 'content' ? contentUrl(p.thumbnail) : studioUrl(p.thumbnail);
+            return `
+              <div class="card" onclick="location.hash='#/projects/${p.id}'">
+                <div class="card-media">
+                  <img src="${thumb}" alt="${p.title}" loading="lazy">
+                </div>
+                <div class="card-body">
+                  <div class="card-title">${p.title}</div>
+                  <div class="card-subtitle">${p.scenes.length} scenes &middot; ${p.duration} &middot; ${p.format}</div>
+                  <div class="card-tags">${statusBadge(p.status)}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>Recent Videos</h2>
+          <a href="#/videos" class="view-all">View all &rarr;</a>
+        </div>
+        <div class="grid grid-4">
+          ${DATA.videos.map((v, i) => {
+            const persona = getPersona(v.persona);
+            return mediaCard({
+              src: contentUrl(v.file),
+              type: 'video',
+              title: v.title,
+              subtitle: persona ? persona.name : '',
+              duration: v.duration,
+              tags: [v.resolution, v.format],
+              lbGroup: recentLB,
+              lbIndex: i
+            });
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>Personas</h2>
+          <a href="#/personas" class="view-all">View all &rarr;</a>
+        </div>
+        <div class="grid grid-4">
+          ${DATA.personas.slice(0, 8).map(p => `
+            <div class="card" onclick="location.hash='#/personas/${p.id}'">
+              <div class="card-media square">
+                <img src="${contentUrl(p.avatar)}" alt="${p.name}" loading="lazy">
+              </div>
+              <div class="card-body">
+                <div class="card-title">${p.name}</div>
+                <div class="card-subtitle">${p.handle}</div>
+                <div class="card-tags"><span class="badge badge-niche">${p.niche}</span></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- PROJECTS ---
+  function renderProjects(app) {
+    renderNav('projects');
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Projects', href: '#/projects' }
+    ]);
+
+    app.innerHTML = `
+      <div class="page-header">
+        <h1>Projects</h1>
+        <p>Video production pipeline — all active and completed projects</p>
+      </div>
+      <div class="grid grid-3">
+        ${DATA.projects.map(p => {
+          const thumb = p.thumbnailRepo === 'content' ? contentUrl(p.thumbnail) : studioUrl(p.thumbnail);
+          const done = p.scenes.filter(s => s.status === 'approved').length;
+          return `
+            <div class="card" onclick="location.hash='#/projects/${p.id}'">
+              <div class="card-media">
+                <img src="${thumb}" alt="${p.title}" loading="lazy">
+              </div>
+              <div class="card-body">
+                <div class="card-title">${p.title}</div>
+                <div class="card-subtitle">${p.scenes.length} scenes &middot; ${done} approved &middot; ${p.duration}</div>
+                <div class="card-tags">
+                  ${statusBadge(p.status)}
+                  <span class="badge badge-niche">${p.format}</span>
+                  <span class="badge badge-niche">${p.style.split(',')[0]}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  // --- PROJECT DETAIL ---
+  function renderProject(app, slug) {
+    renderNav('projects');
+    const project = DATA.projects.find(p => p.id === slug);
+    if (!project) {
+      app.innerHTML = '<div class="empty-state"><h3>Project not found</h3></div>';
+      return;
+    }
+
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Projects', href: '#/projects' },
+      { label: project.title, href: `#/projects/${slug}` }
+    ]);
+
+    lbGroups = [];
+
+    // Assets lightbox
+    const assetItems = project.assets.map(a => ({
+      url: studioUrl(a.file),
+      type: 'image',
+      title: a.name,
+      filename: a.file.split('/').pop()
+    }));
+    const assetLB = registerLB(assetItems);
+
+    const thumb = project.thumbnailRepo === 'content' ? contentUrl(project.thumbnail) : studioUrl(project.thumbnail);
+    const done = project.scenes.filter(s => s.status === 'approved').length;
+
+    app.innerHTML = `
+      <div class="project-hero">
+        <div style="border-radius:var(--radius);overflow:hidden;">
+          <img src="${thumb}" alt="${project.title}" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <div class="project-meta">
+          <div>${statusBadge(project.status)}</div>
+          <h1>${project.title}</h1>
+          <p style="color:var(--text-secondary);font-size:14px;">${project.story}</p>
+          <div class="project-meta-grid">
+            <div class="project-meta-item">
+              <span class="label">Duration</span>
+              <span class="value">${project.duration}</span>
+            </div>
+            <div class="project-meta-item">
+              <span class="label">Format</span>
+              <span class="value">${project.format}</span>
+            </div>
+            <div class="project-meta-item">
+              <span class="label">Scenes</span>
+              <span class="value">${project.scenes.length} total &middot; ${done} approved</span>
+            </div>
+            <div class="project-meta-item">
+              <span class="label">Style</span>
+              <span class="value">${project.style}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h2>Characters</h2></div>
+        <div class="grid grid-4">
+          ${project.characters.map(c => {
+            const persona = c.persona ? getPersona(c.persona) : null;
+            const avatar = persona ? contentUrl(persona.avatar) : (c.avatar ? contentUrl(c.avatar) : '');
+            return `
+              <div class="card" ${persona ? `onclick="location.hash='#/personas/${persona.id}'"` : ''}>
+                <div class="card-media square">
+                  ${avatar ? `<img src="${avatar}" alt="${c.name}" loading="lazy">` : '<div style="width:100%;height:100%;background:var(--bg-elevated);"></div>'}
+                </div>
+                <div class="card-body">
+                  <div class="card-title">${c.name}</div>
+                  <div class="card-subtitle">${c.role}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h2>Assets</h2></div>
+        <div class="grid grid-4">
+          ${project.assets.map((a, i) => `
+            <div class="card" onclick="window._openLB(${assetLB}, ${i})">
+              <div class="card-media">
+                <img src="${studioUrl(a.file)}" alt="${a.name}" loading="lazy">
+                ${downloadBtn(studioUrl(a.file), a.file.split('/').pop())}
+              </div>
+              <div class="card-body">
+                <div class="card-title">${a.name}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h2>Scenes (${project.scenes.length})</h2></div>
+        <div class="grid grid-3">
+          ${project.scenes.map(s => `
+            <div class="scene-card">
+              <div class="scene-card-header">
+                <span class="scene-number">Scene ${s.id} — ${s.name}</span>
+                ${statusBadge(s.status)}
+              </div>
+              <div class="scene-card-body">
+                <p class="scene-description">${s.desc}</p>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                  <span style="display:flex;align-items:center;gap:4px;color:var(--text-muted);font-size:12px;">${ICON.clock} ${s.dur}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- PERSONAS ---
+  function renderPersonas(app) {
+    renderNav('personas');
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Personas', href: '#/personas' }
+    ]);
+
+    const niches = [...new Set(DATA.personas.map(p => p.niche))];
+    let activeFilter = 'All';
+
+    function render(filter) {
+      activeFilter = filter;
+      const filtered = filter === 'All' ? DATA.personas : DATA.personas.filter(p => p.niche === filter);
+
+      app.innerHTML = `
+        <div class="page-header">
+          <h1>Personas</h1>
+          <p>${DATA.personas.length} AI characters across ${niches.length} niches</p>
+        </div>
+        <div class="filter-bar">
+          <button class="filter-btn ${activeFilter === 'All' ? 'active' : ''}" onclick="window._filterPersonas('All')">All</button>
+          ${niches.map(n => `
+            <button class="filter-btn ${activeFilter === n ? 'active' : ''}" onclick="window._filterPersonas('${n}')">${n}</button>
+          `).join('')}
+        </div>
+        <div class="grid grid-4">
+          ${filtered.map(p => `
+            <div class="card" onclick="location.hash='#/personas/${p.id}'">
+              <div class="card-media square">
+                <img src="${contentUrl(p.avatar)}" alt="${p.name}" loading="lazy">
+                ${downloadBtn(contentUrl(p.avatar), p.avatar.split('/').pop())}
+              </div>
+              <div class="card-body">
+                <div class="card-title">${p.name}</div>
+                <div class="card-subtitle">${p.handle}</div>
+                <div class="card-tags"><span class="badge badge-niche">${p.niche}</span></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    window._filterPersonas = function (filter) { render(filter); };
+    render('All');
+  }
+
+  // --- PERSONA DETAIL ---
+  function renderPersona(app, slug) {
+    renderNav('personas');
+    const persona = DATA.personas.find(p => p.id === slug);
+    if (!persona) {
+      app.innerHTML = '<div class="empty-state"><h3>Persona not found</h3></div>';
+      return;
+    }
+
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Personas', href: '#/personas' },
+      { label: persona.name, href: `#/personas/${slug}` }
+    ]);
+
+    lbGroups = [];
+
+    // Posts lightbox
+    const postItems = persona.posts.map(p => ({
+      url: contentUrl(p),
+      type: 'image',
+      title: persona.name,
+      filename: p.split('/').pop()
+    }));
+    const postLB = registerLB(postItems);
+
+    // Niche images lightbox (10 images)
+    const nicheImgs = [];
+    for (let i = 1; i <= 10; i++) {
+      nicheImgs.push({
+        url: contentUrl(persona.nicheImages + '/' + String(i).padStart(2, '0') + '.jpg'),
+        type: 'image',
+        title: persona.niche + ' #' + i,
+        filename: persona.niche.toLowerCase() + '_' + String(i).padStart(2, '0') + '.jpg'
+      });
+    }
+    const nicheLB = registerLB(nicheImgs);
+
+    // Videos for this persona
+    const personaVideos = DATA.videos.filter(v => v.persona === persona.id);
+    let videoLB = -1;
+    if (personaVideos.length > 0) {
+      videoLB = registerLB(personaVideos.map(v => ({
+        url: contentUrl(v.file),
+        type: 'video',
+        title: v.title,
+        filename: v.file.split('/').pop()
+      })));
+    }
+
+    // Projects featuring this persona
+    const inProjects = DATA.projects.filter(p =>
+      p.characters.some(c => c.persona === persona.id)
+    );
+
+    let activeTab = 'posts';
+
+    function renderTabs(tab) {
+      activeTab = tab;
+      const tabContent = document.getElementById('persona-tab-content');
+      if (!tabContent) return;
+
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+      if (tab === 'posts') {
+        tabContent.innerHTML = `
+          <div class="grid grid-4">
+            ${persona.posts.map((p, i) => `
+              <div class="card" onclick="window._openLB(${postLB}, ${i})">
+                <div class="card-media square">
+                  <img src="${contentUrl(p)}" alt="${persona.name}" loading="lazy">
+                  ${downloadBtn(contentUrl(p), p.split('/').pop())}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (tab === 'niche') {
+        tabContent.innerHTML = `
+          <div class="grid grid-4">
+            ${nicheImgs.map((img, i) => `
+              <div class="card" onclick="window._openLB(${nicheLB}, ${i})">
+                <div class="card-media">
+                  <img src="${img.url}" alt="${img.title}" loading="lazy">
+                  ${downloadBtn(img.url, img.filename)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (tab === 'videos') {
+        if (personaVideos.length === 0) {
+          tabContent.innerHTML = '<div class="empty-state"><h3>No videos yet</h3><p>Videos featuring this persona will appear here.</p></div>';
+        } else {
+          tabContent.innerHTML = `
+            <div class="grid grid-3">
+              ${personaVideos.map((v, i) => mediaCard({
+                src: contentUrl(v.file),
+                type: 'video',
+                title: v.title,
+                subtitle: v.duration + ' &middot; ' + v.resolution,
+                duration: v.duration,
+                tags: [v.style],
+                lbGroup: videoLB,
+                lbIndex: i
+              })).join('')}
+            </div>
+          `;
+        }
+      }
+    }
+
+    window._switchTab = renderTabs;
+
+    app.innerHTML = `
+      <div class="persona-header">
+        <img class="persona-avatar" src="${contentUrl(persona.avatar)}" alt="${persona.name}">
+        <div class="persona-info">
+          <h1>${persona.name}</h1>
+          <div class="persona-handle">${persona.handle}</div>
+          <p class="persona-bio">${persona.bio}</p>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge badge-niche">${persona.niche}</span>
+            ${inProjects.map(p => `<span class="badge badge-production" style="cursor:pointer;" onclick="location.hash='#/projects/${p.id}'">${p.title}</span>`).join('')}
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-accent" onclick="window._download('${contentUrl(persona.avatar)}', '${persona.avatar.split('/').pop()}')">${ICON.download} Download Avatar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="posts" onclick="window._switchTab('posts')">Posts (${persona.posts.length})</button>
+        <button class="tab" data-tab="niche" onclick="window._switchTab('niche')">${persona.niche} Collection</button>
+        <button class="tab" data-tab="videos" onclick="window._switchTab('videos')">Videos (${personaVideos.length})</button>
+      </div>
+      <div id="persona-tab-content"></div>
+    `;
+
+    renderTabs('posts');
+  }
+
+  // --- VIDEOS ---
+  function renderVideos(app) {
+    renderNav('videos');
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Videos', href: '#/videos' }
+    ]);
+
+    lbGroups = [];
+    const allItems = DATA.videos.map(v => ({
+      url: contentUrl(v.file),
+      type: 'video',
+      title: v.title,
+      filename: v.file.split('/').pop()
+    }));
+    const allLB = registerLB(allItems);
+
+    app.innerHTML = `
+      <div class="page-header">
+        <h1>Videos</h1>
+        <p>${DATA.videos.length} generated videos — Seedance 2.0 via Kie AI</p>
+      </div>
+      <div class="grid grid-3">
+        ${DATA.videos.map((v, i) => {
+          const persona = getPersona(v.persona);
+          return mediaCard({
+            src: contentUrl(v.file),
+            type: 'video',
+            title: v.title,
+            subtitle: (persona ? persona.name + ' &middot; ' : '') + v.date,
+            duration: v.duration,
+            tags: [v.resolution, v.format, v.style.split(' ')[0]],
+            lbGroup: allLB,
+            lbIndex: i
+          });
+        }).join('')}
+      </div>
+    `;
+  }
+
+  // --- IMAGES ---
+  function renderImages(app) {
+    renderNav('images');
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Images', href: '#/images' }
+    ]);
+
+    lbGroups = [];
+    let activeFilter = 'All';
+
+    // Collect all images
+    const allImages = [];
+
+    // Persona avatars
+    DATA.personas.forEach(p => {
+      allImages.push({
+        url: contentUrl(p.avatar),
+        title: p.name,
+        category: 'Avatars',
+        niche: p.niche,
+        filename: p.avatar.split('/').pop()
+      });
+    });
+
+    // Persona posts
+    DATA.personas.forEach(p => {
+      p.posts.forEach((post, i) => {
+        allImages.push({
+          url: contentUrl(post),
+          title: p.name + ' — Post ' + (i + 1),
+          category: 'Posts',
+          niche: p.niche,
+          filename: post.split('/').pop()
+        });
+      });
+    });
+
+    // Project assets
+    DATA.projects.forEach(proj => {
+      proj.assets.forEach(a => {
+        allImages.push({
+          url: studioUrl(a.file),
+          title: a.name + ' (' + proj.title + ')',
+          category: 'Assets',
+          niche: 'Project',
+          filename: a.file.split('/').pop()
+        });
+      });
+    });
+
+    // Tim Lee
+    if (DATA.characters) {
+      DATA.characters.forEach(c => {
+        c.images.forEach(img => {
+          allImages.push({
+            url: contentUrl(img),
+            title: c.name,
+            category: 'Characters',
+            niche: 'Character',
+            filename: img.split('/').pop()
+          });
+        });
+      });
+    }
+
+    const categories = ['All', ...new Set(allImages.map(i => i.category))];
+
+    function render(filter) {
+      activeFilter = filter;
+      const filtered = filter === 'All' ? allImages : allImages.filter(i => i.category === filter);
+
+      // Register lightbox for filtered items
+      const lbItems = filtered.map(img => ({
+        url: img.url,
+        type: 'image',
+        title: img.title,
+        filename: img.filename
+      }));
+      lbGroups = [];
+      const imgLB = registerLB(lbItems);
+
+      app.innerHTML = `
+        <div class="page-header">
+          <h1>Images</h1>
+          <p>${allImages.length} images across all projects and personas</p>
+        </div>
+        <div class="filter-bar">
+          ${categories.map(c => `
+            <button class="filter-btn ${activeFilter === c ? 'active' : ''}" onclick="window._filterImages('${c}')">${c}${c !== 'All' ? ` (${allImages.filter(i => i.category === c).length})` : ''}</button>
+          `).join('')}
+        </div>
+        <div class="masonry">
+          ${filtered.map((img, i) => `
+            <div class="card" onclick="window._openLB(${imgLB}, ${i})">
+              <div class="card-media">
+                <img src="${img.url}" alt="${img.title}" loading="lazy">
+                ${downloadBtn(img.url, img.filename)}
+              </div>
+              <div class="card-body">
+                <div class="card-title">${img.title}</div>
+                <div class="card-tags">
+                  <span class="badge badge-niche">${img.category}</span>
+                  ${img.niche !== img.category ? `<span class="badge badge-niche">${img.niche}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    window._filterImages = function (filter) { render(filter); };
+    render('All');
+  }
+
+  // ===========================
+  //        ROUTER
+  // ===========================
+  function route() {
+    if (!DATA) return;
+
+    const hash = (location.hash || '#/').slice(2); // remove '#/'
+    const parts = hash.split('/').filter(Boolean);
+    const app = document.getElementById('app');
+
+    // Reset lightbox groups on each navigation
+    lbGroups = [];
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+
+    if (parts.length === 0) {
+      renderHome(app);
+    } else if (parts[0] === 'projects' && parts.length === 1) {
+      renderProjects(app);
+    } else if (parts[0] === 'projects' && parts.length === 2) {
+      renderProject(app, parts[1]);
+    } else if (parts[0] === 'personas' && parts.length === 1) {
+      renderPersonas(app);
+    } else if (parts[0] === 'personas' && parts.length === 2) {
+      renderPersona(app, parts[1]);
+    } else if (parts[0] === 'videos') {
+      renderVideos(app);
+    } else if (parts[0] === 'images') {
+      renderImages(app);
+    } else {
+      renderNav('');
+      renderBreadcrumb([]);
+      app.innerHTML = '<div class="empty-state"><h3>Page not found</h3><p><a href="#/">Go back to dashboard</a></p></div>';
+    }
+  }
+
+  // ===========================
+  //        INIT
+  // ===========================
+  async function init() {
+    const app = document.getElementById('app');
+    app.innerHTML = '<div class="loading"><div class="spinner"></div>Loading dashboard...</div>';
+
+    try {
+      const res = await fetch('data/registry.json');
+      DATA = await res.json();
+      window.addEventListener('hashchange', route);
+      route();
+    } catch (e) {
+      app.innerHTML = `
+        <div class="empty-state">
+          <h3>Failed to load data</h3>
+          <p>Could not fetch registry.json. Make sure you're running a local server.</p>
+          <p style="margin-top:8px;font-size:12px;color:var(--text-muted);">Try: npx serve</p>
+        </div>
+      `;
+    }
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
