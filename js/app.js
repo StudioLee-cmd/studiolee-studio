@@ -20,7 +20,8 @@
     play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
     clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     film: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>',
-    expand: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>'
+    expand: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>',
+    spending: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'
   };
 
   // --- Helpers ---
@@ -34,6 +35,46 @@
 
   function getPersona(id) {
     return DATA.personas.find(p => p.id === id);
+  }
+
+  // --- Spending helpers ---
+  function usdToEur(usd) {
+    return (usd * (DATA.meta.usdToEur || 0.88)).toFixed(2);
+  }
+
+  function creditsToUsd(credits) {
+    return (credits * 5 / 1000).toFixed(2);
+  }
+
+  function getPersonaSpending(personaId) {
+    if (!DATA.spending || !DATA.spending.perPersona) return null;
+    return DATA.spending.perPersona[personaId] || null;
+  }
+
+  function getProjectSpending(projectId) {
+    if (!DATA.spending || !DATA.spending.perProject) return null;
+    return DATA.spending.perProject[projectId] || null;
+  }
+
+  function spendingBadge(credits, usd) {
+    if (!credits) return '';
+    const eur = usdToEur(usd);
+    return `<span class="badge badge-spending" title="${credits} credits = $${usd} / €${eur}">${credits} cr &middot; €${eur}</span>`;
+  }
+
+  function spendingCard(label, credits, usd, attempts, failures) {
+    const eur = usdToEur(usd);
+    return `
+      <div class="stat-card">
+        <div class="stat-value" style="font-size:24px;">€${eur}</div>
+        <div class="stat-label">${label}</div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);">
+          ${credits} credits &middot; $${usd.toFixed(2)} USD
+          ${attempts ? `<br>${attempts} generations` : ''}
+          ${failures ? ` &middot; <span style="color:var(--danger);">${failures} failed</span>` : ''}
+        </div>
+      </div>
+    `;
   }
 
   function statusBadge(status) {
@@ -80,7 +121,8 @@
       { href: '#/projects', label: 'Projects', icon: ICON.projects, key: 'projects' },
       { href: '#/personas', label: 'Personas', icon: ICON.personas, key: 'personas' },
       { href: '#/videos', label: 'Videos', icon: ICON.videos, key: 'videos' },
-      { href: '#/images', label: 'Images', icon: ICON.images, key: 'images' }
+      { href: '#/images', label: 'Images', icon: ICON.images, key: 'images' },
+      { href: '#/spending', label: 'Spending', icon: ICON.spending, key: 'spending' }
     ];
 
     document.getElementById('main-nav').innerHTML = `
@@ -249,6 +291,15 @@
           <div class="stat-value">${totalImages}</div>
           <div class="stat-label">Images</div>
         </div>
+        ${DATA.spending ? `
+        <div class="stat-card" style="cursor:pointer;" onclick="location.hash='#/spending'">
+          <div class="stat-value" style="font-size:24px;">${DATA.spending.totalCredits.toLocaleString()}</div>
+          <div class="stat-label">Credits Spent</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">
+            $${DATA.spending.totalUsd.toFixed(2)} &middot; €${usdToEur(DATA.spending.totalUsd)}
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       <div class="section">
@@ -413,6 +464,14 @@
               <span class="label">Style</span>
               <span class="value">${project.style}</span>
             </div>
+            ${(() => {
+              const ps = getProjectSpending(project.id);
+              if (!ps) return `<div class="project-meta-item"><span class="label">Cost</span><span class="value" style="color:var(--text-muted);">No spend yet</span></div>`;
+              return `<div class="project-meta-item">
+                <span class="label">Cost</span>
+                <span class="value">${ps.credits} cr &middot; $${ps.usd.toFixed(2)} &middot; €${usdToEur(ps.usd)}</span>
+              </div>`;
+            })()}
           </div>
         </div>
       </div>
@@ -650,8 +709,12 @@
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <span class="badge badge-niche">${persona.niche}</span>
             ${inProjects.map(p => `<span class="badge badge-production" style="cursor:pointer;" onclick="location.hash='#/projects/${p.id}'">${p.title}</span>`).join('')}
+            ${(() => {
+              const ps = getPersonaSpending(persona.id);
+              return ps ? spendingBadge(ps.credits, ps.usd) : '';
+            })()}
           </div>
-          <div style="margin-top:12px;">
+          <div style="margin-top:12px;display:flex;gap:8px;">
             <button class="btn btn-accent" onclick="window._download('${contentUrl(persona.avatar)}', '${persona.avatar.split('/').pop()}')">${ICON.download} Download Avatar</button>
           </div>
         </div>
@@ -693,13 +756,16 @@
       <div class="grid grid-3">
         ${DATA.videos.map((v, i) => {
           const persona = getPersona(v.persona);
+          const ps = persona ? getPersonaSpending(persona.id) : null;
+          const vidCost = ps ? ps.items.find(it => it.type === 'video') : null;
+          const costTag = vidCost ? `€${usdToEur(vidCost.usd)}` : null;
           return mediaCard({
             src: contentUrl(v.file),
             type: 'video',
             title: v.title,
             subtitle: (persona ? persona.name + ' &middot; ' : '') + v.date,
             duration: v.duration,
-            tags: [v.resolution, v.format, v.style.split(' ')[0]],
+            tags: [v.resolution, v.format, costTag].filter(Boolean),
             lbGroup: allLB,
             lbIndex: i
           });
@@ -841,6 +907,145 @@
     render('All');
   }
 
+  // --- SPENDING ---
+  function renderSpending(app) {
+    renderNav('spending');
+    renderBreadcrumb([
+      { label: 'Home', href: '#/' },
+      { label: 'Spending', href: '#/spending' }
+    ]);
+
+    const s = DATA.spending;
+    if (!s) {
+      app.innerHTML = '<div class="empty-state"><h3>No spending data</h3></div>';
+      return;
+    }
+
+    const eur = usdToEur(s.totalUsd);
+
+    // Per-persona table rows
+    const personaRows = Object.entries(s.perPersona)
+      .filter(([k]) => k !== '_niche_backgrounds')
+      .sort((a, b) => b[1].credits - a[1].credits)
+      .map(([id, ps]) => {
+        const persona = getPersona(id);
+        const name = persona ? persona.name : id;
+        const handle = persona ? persona.handle : '';
+        return `
+          <tr onclick="${persona ? `location.hash='#/personas/${id}'` : ''}" style="cursor:${persona ? 'pointer' : 'default'};">
+            <td style="display:flex;align-items:center;gap:10px;">
+              ${persona ? `<img src="${contentUrl(persona.avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : ''}
+              <div>
+                <div style="font-weight:500;">${name}</div>
+                <div style="font-size:12px;color:var(--text-muted);">${handle}</div>
+              </div>
+            </td>
+            <td>${ps.credits.toLocaleString()}</td>
+            <td>$${ps.usd.toFixed(2)}</td>
+            <td>€${usdToEur(ps.usd)}</td>
+            <td>${ps.attempts}</td>
+            <td>${ps.failures > 0 ? `<span style="color:var(--danger);">${ps.failures}</span>` : '0'}</td>
+          </tr>
+        `;
+      });
+
+    // Per-project table rows
+    const projectRows = Object.entries(s.perProject).map(([id, ps]) => {
+      const project = DATA.projects.find(p => p.id === id);
+      const name = project ? project.title : id;
+      return `
+        <tr onclick="${project ? `location.hash='#/projects/${id}'` : ''}" style="cursor:${project ? 'pointer' : 'default'};">
+          <td style="font-weight:500;">${name}</td>
+          <td>${ps.credits.toLocaleString()}</td>
+          <td>$${ps.usd.toFixed(2)}</td>
+          <td>€${usdToEur(ps.usd)}</td>
+          <td>${ps.attempts}</td>
+          <td>${ps.failures > 0 ? `<span style="color:var(--danger);">${ps.failures}</span>` : '0'}</td>
+        </tr>
+      `;
+    });
+
+    // Niche backgrounds
+    const bgSpend = s.perPersona['_niche_backgrounds'];
+
+    app.innerHTML = `
+      <div class="page-header">
+        <h1>Spending</h1>
+        <p>Kie AI credit usage across all content &middot; Rate: ${s.rate}</p>
+      </div>
+
+      <div class="stats-row">
+        ${spendingCard('Total Spent', s.totalCredits, s.totalUsd)}
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:24px;">$${s.totalUsd.toFixed(2)}</div>
+          <div class="stat-label">USD</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:24px;">€${eur}</div>
+          <div class="stat-label">EUR</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">Rate: 1 USD = ${DATA.meta.usdToEur} EUR</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:24px;">${s.totalCredits.toLocaleString()}</div>
+          <div class="stat-label">Credits Used</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">1,000 credits = $5 USD</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h2>Per Persona</h2></div>
+        <div style="overflow-x:auto;">
+          <table class="spending-table">
+            <thead>
+              <tr>
+                <th>Persona</th>
+                <th>Credits</th>
+                <th>USD</th>
+                <th>EUR</th>
+                <th>Generations</th>
+                <th>Failures</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${personaRows.join('')}
+              ${bgSpend ? `
+              <tr style="border-top:2px solid var(--border);">
+                <td style="font-weight:500;">Niche Backgrounds (shared)</td>
+                <td>${bgSpend.credits.toLocaleString()}</td>
+                <td>$${bgSpend.usd.toFixed(2)}</td>
+                <td>€${usdToEur(bgSpend.usd)}</td>
+                <td>${bgSpend.attempts}</td>
+                <td>0</td>
+              </tr>
+              ` : ''}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h2>Per Project</h2></div>
+        ${projectRows.length > 0 ? `
+        <div style="overflow-x:auto;">
+          <table class="spending-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Credits</th>
+                <th>USD</th>
+                <th>EUR</th>
+                <th>Generations</th>
+                <th>Failures</th>
+              </tr>
+            </thead>
+            <tbody>${projectRows.join('')}</tbody>
+          </table>
+        </div>
+        ` : '<p style="color:var(--text-muted);">No project spending yet — costs will appear as scenes are generated.</p>'}
+      </div>
+    `;
+  }
+
   // ===========================
   //        ROUTER
   // ===========================
@@ -871,6 +1076,8 @@
       renderVideos(app);
     } else if (parts[0] === 'images') {
       renderImages(app);
+    } else if (parts[0] === 'spending') {
+      renderSpending(app);
     } else {
       renderNav('');
       renderBreadcrumb([]);

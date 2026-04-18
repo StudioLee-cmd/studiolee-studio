@@ -2,7 +2,103 @@
   "meta": {
     "lastUpdated": "2026-04-18T12:00:00Z",
     "contentRepo": "https://raw.githubusercontent.com/StudioLee-cmd/seedance-content/main",
-    "studioRepo": "https://raw.githubusercontent.com/StudioLee-cmd/seedance-studio/main"
+    "studioRepo": "https://raw.githubusercontent.com/StudioLee-cmd/seedance-studio/main",
+    "usdToEur": 0.88
+  },
+  "spending": {
+    "totalCredits": 6000,
+    "totalUsd": 30.00,
+    "rate": "1000 credits = $5 USD",
+    "perProject": {
+      "fleur-vs-seagull": {
+        "credits": 0,
+        "usd": 0,
+        "attempts": 0,
+        "failures": 0,
+        "items": []
+      }
+    },
+    "perPersona": {
+      "metal-girl": { "credits": 380, "usd": 1.90, "attempts": 5, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 },
+        { "date": "2026-04-14", "type": "video", "desc": "Headbanging 720P 8s", "credits": 220, "usd": 1.10, "attempts": 1 }
+      ]},
+      "metal-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "goth-girl": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "goth-guy": { "credits": 120, "usd": 0.60, "attempts": 3, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "2 posts", "credits": 80, "usd": 0.40, "attempts": 2 }
+      ]},
+      "punk-girl": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "punk-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "golf-girl": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "golf-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "surfer-girl": { "credits": 380, "usd": 1.90, "attempts": 5, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 },
+        { "date": "2026-04-14", "type": "video", "desc": "Hang Gliding 720P 8s", "credits": 220, "usd": 1.10, "attempts": 1 }
+      ]},
+      "surfer-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "streetwear-girl": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "streetwear-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "raver-girl": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "raver-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "biker-girl": { "credits": 380, "usd": 1.90, "attempts": 5, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 },
+        { "date": "2026-04-14", "type": "video", "desc": "Coastal Ride 720P 8s", "credits": 220, "usd": 1.10, "attempts": 1 }
+      ]},
+      "biker-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "cottagecore-girl": { "credits": 380, "usd": 1.90, "attempts": 5, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 },
+        { "date": "2026-04-14", "type": "video", "desc": "Meadow 720P 8s", "credits": 220, "usd": 1.10, "attempts": 1 }
+      ]},
+      "cottagecore-guy": { "credits": 160, "usd": 0.80, "attempts": 4, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "Avatar", "credits": 40, "usd": 0.20, "attempts": 1 },
+        { "date": "2026-04-14", "type": "image", "desc": "3 posts", "credits": 120, "usd": 0.60, "attempts": 3 }
+      ]},
+      "_niche_backgrounds": { "credits": 2160, "usd": 10.80, "attempts": 90, "failures": 0, "items": [
+        { "date": "2026-04-14", "type": "image", "desc": "90 niche backgrounds (10 per niche × 9 niches)", "credits": 2160, "usd": 10.80, "attempts": 90 }
+      ]}
+    }
   },
   "personas": [
     {
