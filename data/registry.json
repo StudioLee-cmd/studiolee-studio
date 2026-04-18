@@ -530,10 +530,10 @@
       "chaosTests": [
         { "file": "projects/fleur-vs-seagull/videos/scene_chaos_a_fires_v1.mp4", "label": "Chaos A — Fires v1", "status": "rejected", "dur": 5 },
         { "file": "projects/fleur-vs-seagull/videos/scene_chaos_a_fires_v2.mp4", "label": "Chaos A — Fires v2", "status": "in-review", "dur": 5 },
-        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_b_impacts_v1.mp4", "label": "Chaos B — Impacts v1", "status": "rejected", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_b_impacts_v1.mp4", "label": "Chaos B — Impacts v1", "status": "approved", "dur": 5 },
         { "file": "projects/fleur-vs-seagull/videos/scene_chaos_b_impacts_v2.mp4", "label": "Chaos B — Impacts v2", "status": "in-review", "dur": 5 },
         { "file": "projects/fleur-vs-seagull/videos/scene_chaos_c_panic_v1.mp4", "label": "Chaos C — Panic v1", "status": "rejected", "dur": 5 },
-        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_c_panic_v2.mp4", "label": "Chaos C — Panic v2", "status": "in-review", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_c_panic_v2.mp4", "label": "Chaos C — Panic v2", "status": "rejected", "dur": 5 },
         { "file": "projects/fleur-vs-seagull/videos/scene_chaos_d_clubswing_v1.mp4", "label": "Chaos D — Club Swing v1", "status": "in-review", "dur": 5 }
       ]
     }
