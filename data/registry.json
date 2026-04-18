@@ -346,12 +346,18 @@
       "date": "2026-04-14"
     }
   ],
+  "pricing": {
+    "image": 0.04,
+    "videoPerSecond": 0.10,
+    "currency": "USD",
+    "note": "1 image = $0.04, 1 second of video = $0.10"
+  },
   "projects": [
     {
       "id": "fleur-vs-seagull",
       "title": "Fleur vs the Seagull",
-      "status": "phase-1-assets",
-      "statusLabel": "Phase 1 — Assets",
+      "status": "in-production",
+      "statusLabel": "In Production",
       "duration": "~63s",
       "format": "9:16",
       "style": "UGC comedy, no dialogue, ambient sound only",
@@ -366,26 +372,169 @@
       "assets": [
         { "name": "Fries", "file": "projects/fleur-vs-seagull/assets/fries_front.jpg" },
         { "name": "Ring", "file": "projects/fleur-vs-seagull/assets/ring_closeup.jpg" },
-        { "name": "Seagull", "file": "projects/fleur-vs-seagull/assets/seagull_front.jpg" },
+        { "name": "Seagull (front)", "file": "projects/fleur-vs-seagull/assets/seagull_front.jpg" },
+        { "name": "Seagull (side)", "file": "projects/fleur-vs-seagull/assets/seagull_side.jpg" },
+        { "name": "Seagull (wings)", "file": "projects/fleur-vs-seagull/assets/seagull_wings.jpg" },
         { "name": "Golf Balls", "file": "projects/fleur-vs-seagull/assets/golf_balls.jpg" },
-        { "name": "Street Map", "file": "projects/fleur-vs-seagull/assets/street_map_v4.jpg" }
+        { "name": "Street Map v1", "file": "projects/fleur-vs-seagull/assets/street_map.jpg" },
+        { "name": "Street Map v2", "file": "projects/fleur-vs-seagull/assets/street_map_v2.jpg" },
+        { "name": "Street Map v3", "file": "projects/fleur-vs-seagull/assets/street_map_v3.jpg" },
+        { "name": "Street Map v4 (final)", "file": "projects/fleur-vs-seagull/assets/street_map_v4.jpg" }
       ],
       "scenes": [
-        { "id": 1, "name": "The Fries", "dur": "6s", "desc": "Fleur eating fries at the terrace. Ring visible on table. Happy, relaxed.", "status": "not-started" },
-        { "id": 2, "name": "Gone for a Second", "dur": "4s", "desc": "She stands up to ask about the parasol. Leaves ring and fries on the table.", "status": "not-started" },
-        { "id": 3, "name": "The Heist", "dur": "5s", "desc": "Seagull on the table. Eats fries. Spots ring. Swallows it.", "status": "not-started" },
-        { "id": 4, "name": "The Discovery", "dur": "5s", "desc": "Fleur comes back. Fries gone. Then realizes ring is gone too.", "status": "not-started" },
-        { "id": 5, "name": "The Taunt", "dur": "5s", "desc": "Seagull shows the ring on its claw. Middle finger. Pure villain energy.", "status": "not-started" },
-        { "id": 6, "name": "The Arsenal", "dur": "4s", "desc": "Fleur reaches into golf bag. Game face. Pulls out club and golf balls.", "status": "not-started" },
-        { "id": 7, "name": "First Shot", "dur": "4s", "desc": "First swing. Misses the seagull. Hits a flower pot.", "status": "not-started" },
-        { "id": 8, "name": "Close-up: Golf Ball", "dur": "2s", "desc": "Extreme close-up of a golf ball spinning through the air.", "status": "not-started" },
-        { "id": 9, "name": "Close-up: Fleur's Eyes", "dur": "2s", "desc": "Extreme close-up of Fleur's eyes. Locked on target.", "status": "not-started" },
-        { "id": 10, "name": "Rapid Fire", "dur": "5s", "desc": "Full chaos. Rage-throwing golf balls everywhere. Destruction mounting.", "status": "not-started" },
-        { "id": 11, "name": "Close-up: Damage", "dur": "3s", "desc": "Quick cuts of destruction. Car dent. Window crack. Coffee explosion.", "status": "not-started" },
-        { "id": 12, "name": "Close-up: Seagull Dodge", "dur": "3s", "desc": "Seagull casually dodges a golf ball. Still has the ring.", "status": "not-started" },
-        { "id": 13, "name": "The Last Shot", "dur": "5s", "desc": "One final shot. Fleur concentrating. Hits the seagull. Ring pops out.", "status": "not-started" },
-        { "id": 14, "name": "The Catch", "dur": "4s", "desc": "Ring tumbling through air. Fleur catches it. Triumphant.", "status": "not-started" },
-        { "id": 15, "name": "The Arrest", "dur": "6s", "desc": "Police arrive. She's arrested. But she's happy. Seagull flies away free.", "status": "not-started" }
+        {
+          "id": 1, "name": "The Fries", "dur": "6s", "status": "approved",
+          "desc": "Fleur eating fries at the terrace. Ring visible on table. Happy, relaxed.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-01/scene01_first.jpg", "label": "First frame" },
+            { "file": "projects/fleur-vs-seagull/scene-01/scene01_last.jpg", "label": "Last frame" },
+            { "file": "projects/fleur-vs-seagull/scene-01/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-01/02.jpg", "label": "Concept 2" },
+            { "file": "projects/fleur-vs-seagull/scene-01/03.jpg", "label": "Concept 3" }
+          ],
+          "videos": [
+            { "file": "projects/fleur-vs-seagull/videos/scene01_v1.mp4", "label": "v1", "status": "rejected", "dur": 6 },
+            { "file": "projects/fleur-vs-seagull/videos/scene01_v2.mp4", "label": "v2", "status": "rejected", "dur": 6 },
+            { "file": "projects/fleur-vs-seagull/videos/scene01_v4.mp4", "label": "v4 (approved)", "status": "approved", "dur": 6 }
+          ],
+          "approved": "projects/fleur-vs-seagull/approved/scene-01.jpg"
+        },
+        {
+          "id": 2, "name": "Gone for a Second", "dur": "4s", "status": "in-review",
+          "desc": "She stands up to ask about the parasol. Leaves ring and fries on the table.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-02/scene02_first.jpg", "label": "First frame" },
+            { "file": "projects/fleur-vs-seagull/scene-02/scene02_last.jpg", "label": "Last frame" },
+            { "file": "projects/fleur-vs-seagull/scene-02/scene02_last_original.jpg", "label": "Last (original)" },
+            { "file": "projects/fleur-vs-seagull/scene-02/scene02_last_edited.jpg", "label": "Last (edited)" },
+            { "file": "projects/fleur-vs-seagull/scene-02/scene02_last_nopole_v1.jpg", "label": "Last (no pole v1)" },
+            { "file": "projects/fleur-vs-seagull/scene-02/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-02/03.jpg", "label": "Concept 3" }
+          ],
+          "videos": [
+            { "file": "projects/fleur-vs-seagull/videos/scene02_v1.mp4", "label": "v1", "status": "in-review", "dur": 4 }
+          ],
+          "v2": {
+            "images": [
+              { "file": "projects/fleur-vs-seagull/v2-scene-02/01.jpg", "label": "v2 Concept 1" },
+              { "file": "projects/fleur-vs-seagull/v2-scene-02/02.jpg", "label": "v2 Concept 2" }
+            ]
+          }
+        },
+        {
+          "id": "3", "name": "The Heist", "dur": "5s", "status": "in-review",
+          "desc": "Seagull on the table. Eats fries. Spots ring. Swallows it.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-03/02.jpg", "label": "Concept 2" },
+            { "file": "projects/fleur-vs-seagull/scene-03/03.jpg", "label": "Concept 3" }
+          ],
+          "variants": {
+            "3a": {
+              "name": "Heist — variant A",
+              "images": [
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first.jpg", "label": "First v1" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first_v2.jpg", "label": "First v2" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first_v3.jpg", "label": "First v3" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first_v4.jpg", "label": "First v4" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first_v5.jpg", "label": "First v5" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first_v6.jpg", "label": "First v6" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_first_v7.jpg", "label": "First v7" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_last_v1.jpg", "label": "Last v1" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_last_v2.jpg", "label": "Last v2" },
+                { "file": "projects/fleur-vs-seagull/scene-03a/scene03a_last_v3.jpg", "label": "Last v3" }
+              ],
+              "videos": [
+                { "file": "projects/fleur-vs-seagull/videos/scene03a_v1.mp4", "label": "v1", "status": "in-review", "dur": 5 }
+              ]
+            },
+            "3b": {
+              "name": "Heist — variant B",
+              "images": [
+                { "file": "projects/fleur-vs-seagull/scene-03b/scene03b_last_v1.jpg", "label": "Last v1" },
+                { "file": "projects/fleur-vs-seagull/scene-03b/scene03b_last_v2.jpg", "label": "Last v2" }
+              ],
+              "videos": [
+                { "file": "projects/fleur-vs-seagull/videos/scene03b_v1.mp4", "label": "v1", "status": "rejected", "dur": 5 },
+                { "file": "projects/fleur-vs-seagull/videos/scene03b_v2.mp4", "label": "v2", "status": "rejected", "dur": 5 },
+                { "file": "projects/fleur-vs-seagull/videos/scene03b_v3.mp4", "label": "v3", "status": "rejected", "dur": 5 },
+                { "file": "projects/fleur-vs-seagull/videos/scene03b_v4.mp4", "label": "v4", "status": "in-review", "dur": 5 }
+              ]
+            },
+            "3c": {
+              "name": "Heist — variant C",
+              "images": [],
+              "videos": [
+                { "file": "projects/fleur-vs-seagull/videos/scene03c_v1.mp4", "label": "v1", "status": "rejected", "dur": 5 },
+                { "file": "projects/fleur-vs-seagull/videos/scene03c_v2.mp4", "label": "v2", "status": "in-review", "dur": 5 }
+              ]
+            }
+          }
+        },
+        {
+          "id": 4, "name": "The Discovery", "dur": "5s", "status": "draft",
+          "desc": "Fleur comes back. Fries gone. Then realizes ring is gone too.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-04/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-04/02.jpg", "label": "Concept 2" },
+            { "file": "projects/fleur-vs-seagull/scene-04/03.jpg", "label": "Concept 3" }
+          ],
+          "videos": []
+        },
+        {
+          "id": 5, "name": "The Taunt", "dur": "5s", "status": "draft",
+          "desc": "Seagull shows the ring on its claw. Middle finger. Pure villain energy.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-05/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-05/02.jpg", "label": "Concept 2" },
+            { "file": "projects/fleur-vs-seagull/scene-05/03.jpg", "label": "Concept 3" }
+          ],
+          "videos": []
+        },
+        {
+          "id": 6, "name": "The Arsenal", "dur": "4s", "status": "draft",
+          "desc": "Fleur reaches into golf bag. Game face. Pulls out club and golf balls.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-06/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-06/02.jpg", "label": "Concept 2" },
+            { "file": "projects/fleur-vs-seagull/scene-06/03.jpg", "label": "Concept 3" }
+          ],
+          "videos": []
+        },
+        {
+          "id": 7, "name": "First Shot", "dur": "4s", "status": "draft",
+          "desc": "First swing. Misses the seagull. Hits a flower pot.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-07/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-07/02.jpg", "label": "Concept 2" },
+            { "file": "projects/fleur-vs-seagull/scene-07/03.jpg", "label": "Concept 3" }
+          ],
+          "videos": []
+        },
+        {
+          "id": 8, "name": "Close-up: Golf Ball", "dur": "2s", "status": "draft",
+          "desc": "Extreme close-up of a golf ball spinning through the air.",
+          "images": [
+            { "file": "projects/fleur-vs-seagull/scene-08/01.jpg", "label": "Concept 1" },
+            { "file": "projects/fleur-vs-seagull/scene-08/02.jpg", "label": "Concept 2" }
+          ],
+          "videos": []
+        },
+        { "id": 9, "name": "Close-up: Fleur's Eyes", "dur": "2s", "status": "not-started", "desc": "Extreme close-up of Fleur's eyes. Locked on target.", "images": [], "videos": [] },
+        { "id": 10, "name": "Rapid Fire", "dur": "5s", "status": "not-started", "desc": "Full chaos. Rage-throwing golf balls everywhere. Destruction mounting.", "images": [], "videos": [] },
+        { "id": 11, "name": "Close-up: Damage", "dur": "3s", "status": "not-started", "desc": "Quick cuts of destruction. Car dent. Window crack. Coffee explosion.", "images": [], "videos": [] },
+        { "id": 12, "name": "Close-up: Seagull Dodge", "dur": "3s", "status": "not-started", "desc": "Seagull casually dodges a golf ball. Still has the ring.", "images": [], "videos": [] },
+        { "id": 13, "name": "The Last Shot", "dur": "5s", "status": "not-started", "desc": "One final shot. Fleur concentrating. Hits the seagull. Ring pops out.", "images": [], "videos": [] },
+        { "id": 14, "name": "The Catch", "dur": "4s", "status": "not-started", "desc": "Ring tumbling through air. Fleur catches it. Triumphant.", "images": [], "videos": [] },
+        { "id": 15, "name": "The Arrest", "dur": "6s", "status": "not-started", "desc": "Police arrive. She's arrested. But she's happy. Seagull flies away free.", "images": [], "videos": [] }
+      ],
+      "chaosTests": [
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_a_fires_v1.mp4", "label": "Chaos A — Fires v1", "status": "rejected", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_a_fires_v2.mp4", "label": "Chaos A — Fires v2", "status": "in-review", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_b_impacts_v1.mp4", "label": "Chaos B — Impacts v1", "status": "rejected", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_b_impacts_v2.mp4", "label": "Chaos B — Impacts v2", "status": "in-review", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_c_panic_v1.mp4", "label": "Chaos C — Panic v1", "status": "rejected", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_c_panic_v2.mp4", "label": "Chaos C — Panic v2", "status": "in-review", "dur": 5 },
+        { "file": "projects/fleur-vs-seagull/videos/scene_chaos_d_clubswing_v1.mp4", "label": "Chaos D — Club Swing v1", "status": "in-review", "dur": 5 }
       ]
     }
   ],

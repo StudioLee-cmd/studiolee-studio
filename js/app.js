@@ -514,25 +514,215 @@
         </div>
       </div>
 
+      ${(() => {
+        // Calculate project cost from all scenes
+        const imgPrice = DATA.pricing ? DATA.pricing.image : 0.04;
+        const vidPrice = DATA.pricing ? DATA.pricing.videoPerSecond : 0.10;
+        let totalImgs = project.assets.length;
+        let totalVids = 0;
+        let totalVidSecs = 0;
+
+        project.scenes.forEach(s => {
+          if (s.images) totalImgs += s.images.length;
+          if (s.videos) {
+            totalVids += s.videos.length;
+            s.videos.forEach(v => { totalVidSecs += (v.dur || 0); });
+          }
+          if (s.variants) {
+            Object.values(s.variants).forEach(vr => {
+              if (vr.images) totalImgs += vr.images.length;
+              if (vr.videos) {
+                totalVids += vr.videos.length;
+                vr.videos.forEach(v => { totalVidSecs += (v.dur || 0); });
+              }
+            });
+          }
+          if (s.v2 && s.v2.images) totalImgs += s.v2.images.length;
+        });
+
+        if (project.chaosTests) {
+          totalVids += project.chaosTests.length;
+          project.chaosTests.forEach(v => { totalVidSecs += (v.dur || 0); });
+        }
+
+        const imgCost = totalImgs * imgPrice;
+        const vidCost = totalVidSecs * vidPrice;
+        const totalCost = imgCost + vidCost;
+
+        return `
+      <div class="section">
+        <div class="section-header"><h2>Project Cost</h2></div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px;">€${usdToEur(totalCost)}</div>
+            <div class="stat-label">Total Cost</div>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">$${totalCost.toFixed(2)} USD</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px;">${totalImgs}</div>
+            <div class="stat-label">Images ($${imgPrice}/ea)</div>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">$${imgCost.toFixed(2)} &middot; €${usdToEur(imgCost)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px;">${totalVids}</div>
+            <div class="stat-label">Videos (${totalVidSecs}s)</div>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">$${vidCost.toFixed(2)} &middot; €${usdToEur(vidCost)} &middot; $${vidPrice}/s</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px;">${project.scenes.filter(s=>s.videos&&s.videos.some(v=>v.status==='rejected')).length + (project.chaosTests?project.chaosTests.filter(v=>v.status==='rejected').length:0)}</div>
+            <div class="stat-label">Rejected Takes</div>
+          </div>
+        </div>
+      </div>`;
+      })()}
+
       <div class="section">
         <div class="section-header"><h2>Scenes (${project.scenes.length})</h2></div>
-        <div class="grid grid-3">
-          ${project.scenes.map(s => `
-            <div class="scene-card">
-              <div class="scene-card-header">
-                <span class="scene-number">Scene ${s.id} — ${s.name}</span>
+        ${project.scenes.map(s => {
+          // Collect all images for this scene's lightbox
+          const sceneImgs = (s.images || []).map(img => ({
+            url: studioUrl(img.file), type: 'image', title: img.label, filename: img.file.split('/').pop()
+          }));
+          const sceneLB = sceneImgs.length > 0 ? registerLB(sceneImgs) : -1;
+
+          // Scene cost
+          const sImgCount = (s.images || []).length;
+          const sVidSecs = (s.videos || []).reduce((a, v) => a + (v.dur || 0), 0);
+          let variantImgs = 0, variantVidSecs = 0;
+          if (s.variants) {
+            Object.values(s.variants).forEach(vr => {
+              variantImgs += (vr.images || []).length;
+              variantVidSecs += (vr.videos || []).reduce((a, v) => a + (v.dur || 0), 0);
+            });
+          }
+          if (s.v2 && s.v2.images) variantImgs += s.v2.images.length;
+          const sCost = ((sImgCount + variantImgs) * 0.04) + ((sVidSecs + variantVidSecs) * 0.10);
+
+          return `
+          <div class="scene-card" style="margin-bottom:16px;">
+            <div class="scene-card-header">
+              <span class="scene-number">Scene ${s.id} — ${s.name}</span>
+              <div style="display:flex;gap:6px;align-items:center;">
+                ${sCost > 0 ? `<span class="badge badge-spending">€${usdToEur(sCost)}</span>` : ''}
                 ${statusBadge(s.status)}
               </div>
-              <div class="scene-card-body">
-                <p class="scene-description">${s.desc}</p>
-                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-                  <span style="display:flex;align-items:center;gap:4px;color:var(--text-muted);font-size:12px;">${ICON.clock} ${s.dur}</span>
+            </div>
+            ${(s.images && s.images.length > 0) ? `
+            <div style="display:flex;gap:2px;overflow-x:auto;background:var(--bg-elevated);">
+              ${s.images.map((img, i) => `
+                <div style="position:relative;min-width:120px;height:160px;flex-shrink:0;cursor:pointer;" onclick="window._openLB(${sceneLB}, ${i})">
+                  <img src="${studioUrl(img.file)}" alt="${img.label}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                  ${downloadBtn(studioUrl(img.file), img.file.split('/').pop())}
+                  <span class="scene-frame-label">${img.label}</span>
                 </div>
+              `).join('')}
+            </div>` : ''}
+            ${(s.videos && s.videos.length > 0) ? `
+            <div style="padding:12px 16px 0;">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Videos</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                ${s.videos.map(v => `
+                  <div class="card" style="width:200px;flex-shrink:0;" onclick="window._openLB(${registerLB([{url:studioUrl(v.file),type:'video',title:v.label,filename:v.file.split('/').pop()}])}, 0)">
+                    <div class="card-media" style="aspect-ratio:9/16;height:180px;">
+                      <video src="${studioUrl(v.file)}" muted playsinline onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0" style="width:100%;height:100%;object-fit:cover;"></video>
+                      ${downloadBtn(studioUrl(v.file), v.file.split('/').pop())}
+                      <span class="video-duration">${v.dur}s</span>
+                    </div>
+                    <div class="card-body" style="padding:8px 10px;">
+                      <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:13px;font-weight:500;">${v.label}</span>
+                        ${statusBadge(v.status)}
+                      </div>
+                      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">$${(v.dur * 0.10).toFixed(2)} &middot; €${usdToEur(v.dur * 0.10)}</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>` : ''}
+            ${s.variants ? Object.entries(s.variants).map(([key, vr]) => {
+              const vrImgs = (vr.images || []).map(img => ({
+                url: studioUrl(img.file), type: 'image', title: img.label, filename: img.file.split('/').pop()
+              }));
+              const vrLB = vrImgs.length > 0 ? registerLB(vrImgs) : -1;
+              return `
+              <div style="padding:12px 16px 0;border-top:1px solid var(--border);">
+                <div style="font-size:12px;color:var(--accent);margin-bottom:8px;font-weight:600;">Variant ${key.toUpperCase()} — ${vr.name || ''}</div>
+                ${vrImgs.length > 0 ? `
+                <div style="display:flex;gap:2px;overflow-x:auto;margin-bottom:8px;">
+                  ${vr.images.map((img, i) => `
+                    <div style="position:relative;min-width:100px;height:140px;flex-shrink:0;cursor:pointer;" onclick="window._openLB(${vrLB}, ${i})">
+                      <img src="${studioUrl(img.file)}" alt="${img.label}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">
+                      ${downloadBtn(studioUrl(img.file), img.file.split('/').pop())}
+                      <span class="scene-frame-label">${img.label}</span>
+                    </div>
+                  `).join('')}
+                </div>` : ''}
+                ${(vr.videos && vr.videos.length > 0) ? `
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  ${vr.videos.map(v => `
+                    <div class="card" style="width:160px;flex-shrink:0;" onclick="window._openLB(${registerLB([{url:studioUrl(v.file),type:'video',title:v.label,filename:v.file.split('/').pop()}])}, 0)">
+                      <div class="card-media" style="aspect-ratio:9/16;height:150px;">
+                        <video src="${studioUrl(v.file)}" muted playsinline onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0" style="width:100%;height:100%;object-fit:cover;"></video>
+                        ${downloadBtn(studioUrl(v.file), v.file.split('/').pop())}
+                      </div>
+                      <div class="card-body" style="padding:6px 8px;">
+                        <span style="font-size:12px;">${v.label}</span>
+                        ${statusBadge(v.status)}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>` : ''}
+              </div>`;
+            }).join('') : ''}
+            ${s.v2 ? `
+            <div style="padding:12px 16px 0;border-top:1px solid var(--border);">
+              <div style="font-size:12px;color:var(--accent);margin-bottom:8px;font-weight:600;">V2 Iteration</div>
+              <div style="display:flex;gap:2px;overflow-x:auto;">
+                ${s.v2.images.map((img, i) => {
+                  const v2LB = registerLB(s.v2.images.map(im => ({url:studioUrl(im.file),type:'image',title:im.label,filename:im.file.split('/').pop()})));
+                  return `
+                  <div style="position:relative;min-width:100px;height:140px;flex-shrink:0;cursor:pointer;" onclick="window._openLB(${v2LB}, ${i})">
+                    <img src="${studioUrl(img.file)}" alt="${img.label}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">
+                    ${downloadBtn(studioUrl(img.file), img.file.split('/').pop())}
+                    <span class="scene-frame-label">${img.label}</span>
+                  </div>`;
+                }).join('')}
+              </div>
+            </div>` : ''}
+            <div class="scene-card-body">
+              <p class="scene-description">${s.desc}</p>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                <span style="display:flex;align-items:center;gap:4px;color:var(--text-muted);font-size:12px;">${ICON.clock} ${s.dur}</span>
+                ${s.images ? `<span style="font-size:12px;color:var(--text-muted);">${s.images.length} images</span>` : ''}
+                ${s.videos ? `<span style="font-size:12px;color:var(--text-muted);">${s.videos.length} video takes</span>` : ''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      ${project.chaosTests ? `
+      <div class="section">
+        <div class="section-header"><h2>Chaos Test Clips</h2></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          ${project.chaosTests.map(v => `
+            <div class="card" style="width:200px;" onclick="window._openLB(${registerLB([{url:studioUrl(v.file),type:'video',title:v.label,filename:v.file.split('/').pop()}])}, 0)">
+              <div class="card-media" style="aspect-ratio:9/16;height:200px;">
+                <video src="${studioUrl(v.file)}" muted playsinline onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0" style="width:100%;height:100%;object-fit:cover;"></video>
+                ${downloadBtn(studioUrl(v.file), v.file.split('/').pop())}
+                <span class="video-duration">${v.dur}s</span>
+              </div>
+              <div class="card-body" style="padding:8px 10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;font-weight:500;">${v.label}</span>
+                  ${statusBadge(v.status)}
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">$${(v.dur * 0.10).toFixed(2)}</div>
               </div>
             </div>
           `).join('')}
         </div>
-      </div>
+      </div>` : ''}
     `;
   }
 
