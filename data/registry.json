@@ -939,6 +939,62 @@
           "name": "Character reference sheet",
           "type": "image"
         }
+      ],
+      "thumbnail": "projects/logo-badge-animation/assets/starting-frame.png",
+      "thumbnailRepo": "studio",
+      "story": "The STUDIOLEE badge logo assembles itself — 9 Cuphead-style cartoon characters fly in from all directions with rubber hose physics and settle into their positions around the airplane. YouTube intro/outro.",
+      "characters": [
+        {
+          "name": "Airplane Pilot",
+          "role": "Center",
+          "persona": null,
+          "avatar": null
+        },
+        {
+          "name": "Windmill",
+          "role": "Website",
+          "persona": null
+        },
+        {
+          "name": "Gear",
+          "role": "Automation",
+          "persona": null
+        },
+        {
+          "name": "Disco Ball",
+          "role": "Social Media",
+          "persona": null
+        },
+        {
+          "name": "Washing Machine",
+          "role": "Reminders",
+          "persona": null
+        },
+        {
+          "name": "Helicopter",
+          "role": "Marketing",
+          "persona": null
+        },
+        {
+          "name": "Globe",
+          "role": "SEO",
+          "persona": null
+        },
+        {
+          "name": "Hourglass",
+          "role": "Chatbot",
+          "persona": null
+        },
+        {
+          "name": "Record Player",
+          "role": "Voice AI",
+          "persona": null
+        },
+        {
+          "name": "Ferris Wheel",
+          "role": "Reviews",
+          "persona": null
+        }
       ]
     }
   ],
