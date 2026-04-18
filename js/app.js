@@ -973,18 +973,18 @@
     ]);
 
     lbGroups = [];
-    let activeFilter = 'All';
 
-    // Collect all images
+    // Active filters (multi-select)
+    let filters = { category: 'All', niche: 'All', character: 'All', status: 'All' };
+
+    // Collect all images with full metadata
     const allImages = [];
 
     // Persona avatars
     DATA.personas.forEach(p => {
       allImages.push({
-        url: contentUrl(p.avatar),
-        title: p.name,
-        category: 'Avatars',
-        niche: p.niche,
+        url: contentUrl(p.avatar), title: p.name, category: 'Avatars',
+        niche: p.niche, character: p.name, status: 'approved',
         filename: p.avatar.split('/').pop()
       });
     });
@@ -993,16 +993,14 @@
     DATA.personas.forEach(p => {
       p.posts.forEach((post, i) => {
         allImages.push({
-          url: contentUrl(post),
-          title: p.name + ' — Post ' + (i + 1),
-          category: 'Posts',
-          niche: p.niche,
+          url: contentUrl(post), title: p.name + ' — Post ' + (i + 1), category: 'Posts',
+          niche: p.niche, character: p.name, status: 'approved',
           filename: post.split('/').pop()
         });
       });
     });
 
-    // Niche background images (10 per niche, shared between both characters)
+    // Niche backgrounds
     const seenNiches = new Set();
     DATA.personas.forEach(p => {
       if (seenNiches.has(p.niche)) return;
@@ -1011,22 +1009,50 @@
         const num = String(i).padStart(2, '0');
         allImages.push({
           url: contentUrl(p.nicheImages + '/' + num + '.jpg'),
-          title: p.niche + ' Background #' + i,
-          category: 'Backgrounds',
-          niche: p.niche,
+          title: p.niche + ' Background #' + i, category: 'Backgrounds',
+          niche: p.niche, character: 'Shared', status: 'approved',
           filename: p.niche.toLowerCase() + '_' + num + '.jpg'
         });
       }
     });
 
-    // Project assets
+    // Project scene images (with status from their scene)
     DATA.projects.forEach(proj => {
+      proj.scenes.forEach(s => {
+        (s.images || []).forEach(img => {
+          allImages.push({
+            url: studioUrl(img.file), title: `Scene ${s.id}: ${img.label}`, category: 'Scenes',
+            niche: 'Project', character: proj.title, status: s.status,
+            filename: img.file.split('/').pop()
+          });
+        });
+        // Variants
+        if (s.variants) {
+          Object.entries(s.variants).forEach(([key, vr]) => {
+            (vr.images || []).forEach(img => {
+              allImages.push({
+                url: studioUrl(img.file), title: `Scene ${s.id}${key}: ${img.label}`, category: 'Scenes',
+                niche: 'Project', character: proj.title, status: s.status,
+                filename: img.file.split('/').pop()
+              });
+            });
+          });
+        }
+        if (s.v2) {
+          (s.v2.images || []).forEach(img => {
+            allImages.push({
+              url: studioUrl(img.file), title: `Scene ${s.id} v2: ${img.label}`, category: 'Scenes',
+              niche: 'Project', character: proj.title, status: s.status,
+              filename: img.file.split('/').pop()
+            });
+          });
+        }
+      });
+      // Project assets
       proj.assets.forEach(a => {
         allImages.push({
-          url: studioUrl(a.file),
-          title: a.name + ' (' + proj.title + ')',
-          category: 'Assets',
-          niche: 'Project',
+          url: studioUrl(a.file), title: a.name, category: 'Assets',
+          niche: 'Project', character: proj.title, status: 'approved',
           filename: a.file.split('/').pop()
         });
       });
@@ -1037,10 +1063,8 @@
       DATA.characters.forEach(c => {
         c.images.forEach(img => {
           allImages.push({
-            url: contentUrl(img),
-            title: c.name,
-            category: 'Characters',
-            niche: 'Character',
+            url: contentUrl(img), title: c.name, category: 'Characters',
+            niche: 'Character', character: c.name, status: 'approved',
             filename: img.split('/').pop()
           });
         });
@@ -1048,31 +1072,62 @@
     }
 
     const categories = ['All', ...new Set(allImages.map(i => i.category))];
+    const niches = ['All', ...new Set(allImages.map(i => i.niche))];
+    const characters = ['All', ...new Set(allImages.map(i => i.character))];
+    const statuses = ['All', 'approved', 'in-review', 'draft', 'rejected', 'not-started'];
 
-    function render(filter) {
-      activeFilter = filter;
-      const filtered = filter === 'All' ? allImages : allImages.filter(i => i.category === filter);
+    function applyFilters() {
+      return allImages.filter(img => {
+        if (filters.category !== 'All' && img.category !== filters.category) return false;
+        if (filters.niche !== 'All' && img.niche !== filters.niche) return false;
+        if (filters.character !== 'All' && img.character !== filters.character) return false;
+        if (filters.status !== 'All' && img.status !== filters.status) return false;
+        return true;
+      });
+    }
 
-      // Register lightbox for filtered items
-      const lbItems = filtered.map(img => ({
-        url: img.url,
-        type: 'image',
-        title: img.title,
-        filename: img.filename
-      }));
+    function render() {
+      const filtered = applyFilters();
       lbGroups = [];
+      const lbItems = filtered.map(img => ({
+        url: img.url, type: 'image', title: img.title, filename: img.filename
+      }));
       const imgLB = registerLB(lbItems);
 
       app.innerHTML = `
         <div class="page-header">
           <h1>Images</h1>
-          <p>${allImages.length} images across all projects and personas</p>
+          <p>${allImages.length} total &middot; ${filtered.length} shown</p>
         </div>
-        <div class="filter-bar">
-          ${categories.map(c => `
-            <button class="filter-btn ${activeFilter === c ? 'active' : ''}" onclick="window._filterImages('${c}')">${c}${c !== 'All' ? ` (${allImages.filter(i => i.category === c).length})` : ''}</button>
-          `).join('')}
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Category</div>
+            <div class="filter-bar" style="margin-bottom:0;">
+              ${categories.map(c => `<button class="filter-btn ${filters.category === c ? 'active' : ''}" onclick="window._imgFilter('category','${c}')">${c}${c !== 'All' ? ` (${allImages.filter(i => i.category === c).length})` : ''}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Niche</div>
+            <div class="filter-bar" style="margin-bottom:0;">
+              ${niches.map(n => `<button class="filter-btn ${filters.niche === n ? 'active' : ''}" onclick="window._imgFilter('niche','${n}')">${n}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Character</div>
+            <div class="filter-bar" style="margin-bottom:0;">
+              ${characters.map(c => `<button class="filter-btn ${filters.character === c ? 'active' : ''}" onclick="window._imgFilter('character','${c.replace(/'/g, "\\'")}')">${c}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Status</div>
+            <div class="filter-bar" style="margin-bottom:0;">
+              ${statuses.map(s => `<button class="filter-btn ${filters.status === s ? 'active' : ''}" onclick="window._imgFilter('status','${s}')">${s === 'All' ? 'All' : s.replace('-', ' ')}</button>`).join('')}
+            </div>
+          </div>
         </div>
+
+        ${filtered.length === 0 ? '<div class="empty-state"><h3>No images match filters</h3><p>Try adjusting the filters above.</p></div>' : `
         <div class="masonry">
           ${filtered.map((img, i) => `
             <div class="card" onclick="window._openLB(${imgLB}, ${i})">
@@ -1084,17 +1139,52 @@
                 <div class="card-title">${img.title}</div>
                 <div class="card-tags">
                   <span class="badge badge-niche">${img.category}</span>
-                  ${img.niche !== img.category ? `<span class="badge badge-niche">${img.niche}</span>` : ''}
+                  ${img.niche !== img.category && img.niche !== 'Project' ? `<span class="badge badge-niche">${img.niche}</span>` : ''}
+                  ${img.status !== 'approved' ? statusBadge(img.status) : ''}
                 </div>
               </div>
             </div>
           `).join('')}
-        </div>
+        </div>`}
       `;
     }
 
-    window._filterImages = function (filter) { render(filter); };
-    render('All');
+    window._imgFilter = function (key, value) {
+      filters[key] = value;
+      render();
+    };
+
+    render();
+  }
+
+  // --- Spending auto-calc helpers ---
+  function calcPersonaCost(persona) {
+    const imgPrice = DATA.pricing ? DATA.pricing.image : 0.04;
+    const vidPrice = DATA.pricing ? DATA.pricing.videoPerSecond : 0.10;
+    let imgs = 1 + persona.posts.length; // avatar + posts
+    let vidSecs = 0;
+    DATA.videos.filter(v => v.persona === persona.id).forEach(v => {
+      vidSecs += parseInt(v.duration) || 0;
+    });
+    return { imgs, vidSecs, usd: (imgs * imgPrice) + (vidSecs * vidPrice) };
+  }
+
+  function calcProjectCost(project) {
+    const imgPrice = DATA.pricing ? DATA.pricing.image : 0.04;
+    const vidPrice = DATA.pricing ? DATA.pricing.videoPerSecond : 0.10;
+    let imgs = project.assets.length;
+    let vidSecs = 0;
+    project.scenes.forEach(s => {
+      imgs += (s.images || []).length;
+      (s.videos || []).forEach(v => { vidSecs += (v.dur || 0); });
+      if (s.variants) Object.values(s.variants).forEach(vr => {
+        imgs += (vr.images || []).length;
+        (vr.videos || []).forEach(v => { vidSecs += (v.dur || 0); });
+      });
+      if (s.v2 && s.v2.images) imgs += s.v2.images.length;
+    });
+    if (project.chaosTests) project.chaosTests.forEach(v => { vidSecs += (v.dur || 0); });
+    return { imgs, vidSecs, usd: (imgs * imgPrice) + (vidSecs * vidPrice) };
   }
 
   // --- SPENDING ---
@@ -1106,108 +1196,82 @@
     ]);
 
     const s = DATA.spending;
-    if (!s) {
-      app.innerHTML = '<div class="empty-state"><h3>No spending data</h3></div>';
-      return;
-    }
+    if (!s) { app.innerHTML = '<div class="empty-state"><h3>No spending data</h3></div>'; return; }
 
     const eur = usdToEur(s.totalUsd);
+    const imgPrice = DATA.pricing ? DATA.pricing.image : 0.04;
+    const vidPrice = DATA.pricing ? DATA.pricing.videoPerSecond : 0.10;
 
-    // Per-persona table rows
-    const personaRows = Object.entries(s.perPersona)
-      .filter(([k]) => k !== '_niche_backgrounds')
-      .sort((a, b) => b[1].credits - a[1].credits)
-      .map(([id, ps]) => {
-        const persona = getPersona(id);
-        const name = persona ? persona.name : id;
-        const handle = persona ? persona.handle : '';
-        return `
-          <tr onclick="${persona ? `location.hash='#/personas/${id}'` : ''}" style="cursor:${persona ? 'pointer' : 'default'};">
-            <td style="display:flex;align-items:center;gap:10px;">
-              ${persona ? `<img src="${contentUrl(persona.avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : ''}
-              <div>
-                <div style="font-weight:500;">${name}</div>
-                <div style="font-size:12px;color:var(--text-muted);">${handle}</div>
-              </div>
-            </td>
-            <td>${ps.credits.toLocaleString()}</td>
-            <td>$${ps.usd.toFixed(2)}</td>
-            <td>€${usdToEur(ps.usd)}</td>
-            <td>${ps.attempts}</td>
-            <td>${ps.failures > 0 ? `<span style="color:var(--danger);">${ps.failures}</span>` : '0'}</td>
-          </tr>
-        `;
-      });
+    // Auto-calc per persona
+    const personaRows = DATA.personas.map(p => {
+      const c = calcPersonaCost(p);
+      return { persona: p, ...c };
+    }).sort((a, b) => b.usd - a.usd);
 
-    // Per-project table rows
-    const projectRows = Object.entries(s.perProject).map(([id, ps]) => {
-      const project = DATA.projects.find(p => p.id === id);
-      const name = project ? project.title : id;
-      return `
-        <tr onclick="${project ? `location.hash='#/projects/${id}'` : ''}" style="cursor:${project ? 'pointer' : 'default'};">
-          <td style="font-weight:500;">${name}</td>
-          <td>${ps.credits.toLocaleString()}</td>
-          <td>$${ps.usd.toFixed(2)}</td>
-          <td>€${usdToEur(ps.usd)}</td>
-          <td>${ps.attempts}</td>
-          <td>${ps.failures > 0 ? `<span style="color:var(--danger);">${ps.failures}</span>` : '0'}</td>
-        </tr>
-      `;
+    // Auto-calc per project
+    const projectCosts = DATA.projects.map(p => {
+      const c = calcProjectCost(p);
+      return { project: p, ...c };
     });
 
     // Niche backgrounds
-    const bgSpend = s.perPersona['_niche_backgrounds'];
+    const nicheCount = new Set(DATA.personas.map(p => p.niche)).size;
+    const bgCost = nicheCount * 10 * imgPrice;
+
+    // Failed/retries
+    const accountedFor = personaRows.reduce((a, r) => a + r.usd, 0) + bgCost +
+      projectCosts.reduce((a, r) => a + r.usd, 0) +
+      (DATA.characters ? DATA.characters.reduce((a, c) => a + c.images.length * imgPrice, 0) : 0);
+    const failedCost = Math.max(0, s.totalUsd - accountedFor);
 
     app.innerHTML = `
       <div class="page-header">
         <h1>Spending</h1>
-        <p>Kie AI credit usage across all content &middot; Rate: ${s.rate}</p>
+        <p>Kie AI &middot; $${imgPrice}/image &middot; $${vidPrice}/second video &middot; ${s.rate}</p>
       </div>
 
       <div class="stats-row">
-        ${spendingCard('Total Spent', s.totalCredits, s.totalUsd)}
-        <div class="stat-card">
-          <div class="stat-value" style="font-size:24px;">$${s.totalUsd.toFixed(2)}</div>
-          <div class="stat-label">USD</div>
-        </div>
         <div class="stat-card">
           <div class="stat-value" style="font-size:24px;">€${eur}</div>
-          <div class="stat-label">EUR</div>
-          <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">Rate: 1 USD = ${DATA.meta.usdToEur} EUR</div>
+          <div class="stat-label">Total EUR</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:24px;">$${s.totalUsd.toFixed(2)}</div>
+          <div class="stat-label">Total USD</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" style="font-size:24px;">${s.totalCredits.toLocaleString()}</div>
-          <div class="stat-label">Credits Used</div>
-          <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">1,000 credits = $5 USD</div>
+          <div class="stat-label">Credits</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">1,000 cr = $5</div>
         </div>
+        ${failedCost > 0.01 ? `
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:24px;color:var(--danger);">$${failedCost.toFixed(2)}</div>
+          <div class="stat-label">Failed / Retries</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">€${usdToEur(failedCost)}</div>
+        </div>` : ''}
       </div>
 
       <div class="section">
-        <div class="section-header"><h2>Per Persona</h2></div>
+        <div class="section-header"><h2>Breakdown</h2></div>
         <div style="overflow-x:auto;">
           <table class="spending-table">
-            <thead>
-              <tr>
-                <th>Persona</th>
-                <th>Credits</th>
-                <th>USD</th>
-                <th>EUR</th>
-                <th>Generations</th>
-                <th>Failures</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Category</th><th>USD</th><th>EUR</th><th>Details</th></tr></thead>
             <tbody>
-              ${personaRows.join('')}
-              ${bgSpend ? `
-              <tr style="border-top:2px solid var(--border);">
-                <td style="font-weight:500;">Niche Backgrounds (shared)</td>
-                <td>${bgSpend.credits.toLocaleString()}</td>
-                <td>$${bgSpend.usd.toFixed(2)}</td>
-                <td>€${usdToEur(bgSpend.usd)}</td>
-                <td>${bgSpend.attempts}</td>
-                <td>0</td>
+              ${s.breakdown ? Object.entries(s.breakdown).map(([k, v]) => `
+                <tr>
+                  <td style="font-weight:500;">${k.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</td>
+                  <td>$${v.usd.toFixed(2)}</td>
+                  <td>€${usdToEur(v.usd)}</td>
+                  <td style="color:var(--text-secondary);font-size:13px;">${v.desc}</td>
+                </tr>
+              `).join('') : ''}
+              <tr style="border-top:2px solid var(--accent);font-weight:700;">
+                <td>Total</td>
+                <td>$${s.totalUsd.toFixed(2)}</td>
+                <td>€${eur}</td>
+                <td></td>
               </tr>
-              ` : ''}
             </tbody>
           </table>
         </div>
@@ -1215,23 +1279,55 @@
 
       <div class="section">
         <div class="section-header"><h2>Per Project</h2></div>
-        ${projectRows.length > 0 ? `
         <div style="overflow-x:auto;">
           <table class="spending-table">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>Credits</th>
-                <th>USD</th>
-                <th>EUR</th>
-                <th>Generations</th>
-                <th>Failures</th>
-              </tr>
-            </thead>
-            <tbody>${projectRows.join('')}</tbody>
+            <thead><tr><th>Project</th><th>Images</th><th>Video (s)</th><th>USD</th><th>EUR</th></tr></thead>
+            <tbody>
+              ${projectCosts.map(r => `
+                <tr style="cursor:pointer;" onclick="location.hash='#/projects/${r.project.id}'">
+                  <td style="font-weight:500;">${r.project.title}</td>
+                  <td>${r.imgs} × $${imgPrice}</td>
+                  <td>${r.vidSecs}s × $${vidPrice}</td>
+                  <td>$${r.usd.toFixed(2)}</td>
+                  <td>€${usdToEur(r.usd)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
           </table>
         </div>
-        ` : '<p style="color:var(--text-muted);">No project spending yet — costs will appear as scenes are generated.</p>'}
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h2>Per Persona</h2></div>
+        <div style="overflow-x:auto;">
+          <table class="spending-table">
+            <thead><tr><th>Persona</th><th>Images</th><th>Video (s)</th><th>USD</th><th>EUR</th></tr></thead>
+            <tbody>
+              ${personaRows.map(r => `
+                <tr style="cursor:pointer;" onclick="location.hash='#/personas/${r.persona.id}'">
+                  <td style="display:flex;align-items:center;gap:10px;">
+                    <img src="${contentUrl(r.persona.avatar)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+                    <div>
+                      <div style="font-weight:500;">${r.persona.name}</div>
+                      <div style="font-size:11px;color:var(--text-muted);">${r.persona.niche}</div>
+                    </div>
+                  </td>
+                  <td>${r.imgs}</td>
+                  <td>${r.vidSecs > 0 ? r.vidSecs + 's' : '—'}</td>
+                  <td>$${r.usd.toFixed(2)}</td>
+                  <td>€${usdToEur(r.usd)}</td>
+                </tr>
+              `).join('')}
+              <tr style="border-top:2px solid var(--border);">
+                <td style="font-weight:500;">Niche Backgrounds (shared)</td>
+                <td>${nicheCount * 10}</td>
+                <td>—</td>
+                <td>$${bgCost.toFixed(2)}</td>
+                <td>€${usdToEur(bgCost)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
   }
