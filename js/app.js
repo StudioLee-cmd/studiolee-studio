@@ -213,7 +213,8 @@
     renderBreadcrumb([{ label: 'Home', href: '#/' }]);
     lbGroups = [];
 
-    const totalImages = DATA.personas.length + DATA.personas.reduce((a, p) => a + p.posts.length, 0);
+    const nicheCount = new Set(DATA.personas.map(p => p.niche)).size;
+    const totalImages = DATA.personas.length + DATA.personas.reduce((a, p) => a + p.posts.length, 0) + (nicheCount * 10);
     const approvedScenes = DATA.projects.reduce((a, p) => a + p.scenes.filter(s => s.status === 'approved').length, 0);
 
     // Recent items for lightbox
@@ -743,6 +744,23 @@
           filename: post.split('/').pop()
         });
       });
+    });
+
+    // Niche background images (10 per niche, shared between both characters)
+    const seenNiches = new Set();
+    DATA.personas.forEach(p => {
+      if (seenNiches.has(p.niche)) return;
+      seenNiches.add(p.niche);
+      for (let i = 1; i <= 10; i++) {
+        const num = String(i).padStart(2, '0');
+        allImages.push({
+          url: contentUrl(p.nicheImages + '/' + num + '.jpg'),
+          title: p.niche + ' Background #' + i,
+          category: 'Backgrounds',
+          niche: p.niche,
+          filename: p.niche.toLowerCase() + '_' + num + '.jpg'
+        });
+      }
     });
 
     // Project assets
